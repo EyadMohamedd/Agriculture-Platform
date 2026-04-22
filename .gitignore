@@ -1,0 +1,10 @@
+# Build outputs (always ignore)
+/Agriculture-Platfrom-APIs/bin/
+/Agriculture-Platfrom-APIs/obj/
+
+# Logs (always ignore)
+/Agriculture-Platfrom-APIs/Logs/
+
+# IDE
+.vs/
+.vscode/
