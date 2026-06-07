@@ -12,9 +12,14 @@ public class AlertRepository : SharedRepository<AlertEntity>, IAlertRepository
     public async Task<PagedResult<AlertEntity>> GetAllPagedAsync(PaginationParams pagination)
         => await GetPagedAsync(Builders<AlertEntity>.Filter.Empty, pagination);
 
-    public async Task<PagedResult<AlertEntity>> GetByUserIdPagedAsync(string userId, PaginationParams pagination)
+    public async Task<PagedResult<AlertEntity>> GetByUserIdPagedAsync(
+        string userId, PaginationParams pagination, string? farmId = null, string? severity = null)
     {
         var filter = Builders<AlertEntity>.Filter.Eq(a => a.UserId, userId);
+        if (!string.IsNullOrEmpty(farmId))
+            filter &= Builders<AlertEntity>.Filter.Eq(a => a.FarmId, farmId);
+        if (!string.IsNullOrEmpty(severity))
+            filter &= Builders<AlertEntity>.Filter.Eq(a => a.Severity, severity);
         return await GetPagedAsync(filter, pagination);
     }
 
@@ -26,6 +31,28 @@ public class AlertRepository : SharedRepository<AlertEntity>, IAlertRepository
             Builders<AlertEntity>.Filter.Eq(a => a.IsResolved, false),
             Builders<AlertEntity>.Filter.Gte(a => a.Timestamp, since));
         return await _collection.Find(filter).FirstOrDefaultAsync();
+    }
+
+    public async Task<List<AlertEntity>> GetActiveByFarmIdAsync(string farmId)
+    {
+        var filter = Builders<AlertEntity>.Filter.And(
+            Builders<AlertEntity>.Filter.Eq(a => a.FarmId, farmId),
+            Builders<AlertEntity>.Filter.Eq(a => a.IsResolved, false));
+        return await _collection.Find(filter).ToListAsync();
+    }
+
+    public async Task ResolveBySensorTypePrefixAndSeveritiesAsync(
+        string sensorId, string alertTypePrefix, IEnumerable<string> severities)
+    {
+        var filter = Builders<AlertEntity>.Filter.And(
+            Builders<AlertEntity>.Filter.Eq(a => a.SensorId, sensorId),
+            Builders<AlertEntity>.Filter.Eq(a => a.IsResolved, false),
+            Builders<AlertEntity>.Filter.Regex(a => a.Type, new MongoDB.Bson.BsonRegularExpression($"^{alertTypePrefix}_")),
+            Builders<AlertEntity>.Filter.In(a => a.Severity, severities));
+        var update = Builders<AlertEntity>.Update
+            .Set(a => a.IsResolved, true)
+            .Set(a => a.ResolvedAt, DateTime.UtcNow);
+        await _collection.UpdateManyAsync(filter, update);
     }
 
     public async Task DeleteByFarmIdAsync(string farmId)

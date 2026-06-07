@@ -21,7 +21,7 @@ public class UserController : ControllerBase
         _changePasswordValidator = changePasswordValidator;
     }
 
-    // GET /api/users/profile  — Farmer (own) | Admin
+    // GET /api/users/profile  — Farmer | Admin
     [HttpGet("profile")]
     [AuthorizeRole(RoleConstants.Farmer, RoleConstants.Admin)]
     public async Task<IActionResult> GetProfile()
@@ -35,13 +35,12 @@ public class UserController : ControllerBase
             user.Email,
             user.Phone,
             user.Role,
-            user.FarmLocation,
             user.CreatedAt,
             user.UpdatedAt
         }));
     }
 
-    // PUT /api/users/profile  — Farmer (own) | Admin
+    // PUT /api/users/profile  — Farmer | Admin
     [HttpPut("profile")]
     [AuthorizeRole(RoleConstants.Farmer, RoleConstants.Admin)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
@@ -55,13 +54,12 @@ public class UserController : ControllerBase
             user.Email,
             user.Phone,
             user.Role,
-            user.FarmLocation,
             user.CreatedAt,
             user.UpdatedAt
         }, "Profile updated successfully."));
     }
 
-    // PUT /api/users/password  — Farmer (own) | Admin
+    // PUT /api/users/password  — Farmer | Admin
     [HttpPut("password")]
     [AuthorizeRole(RoleConstants.Farmer, RoleConstants.Admin)]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)

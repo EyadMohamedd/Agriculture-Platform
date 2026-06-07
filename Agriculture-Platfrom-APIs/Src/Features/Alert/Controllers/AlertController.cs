@@ -18,14 +18,16 @@ public class AlertController : ControllerBase
         _alertService = alertService;
     }
 
-    // GET /api/alerts  — Farmer (own) | Admin (all)
+    // GET /api/alerts?farmId=...&severity=...  — Farmer (own alerts only)
     [HttpGet]
-    [AuthorizeRole(RoleConstants.Farmer, RoleConstants.Admin)]
-    public async Task<IActionResult> GetAlerts([FromQuery] PaginationParams pagination)
+    [AuthorizeRole(RoleConstants.Farmer)]
+    public async Task<IActionResult> GetAlerts(
+        [FromQuery] string? farmId,
+        [FromQuery] string? severity,
+        [FromQuery] PaginationParams pagination)
     {
-        var userId   = HttpContext.Items["UserId"]!.ToString()!;
-        var userRole = HttpContext.Items["UserRole"]!.ToString()!;
-        var result = await _alertService.GetAlertsAsync(userId, userRole, pagination);
+        var userId = HttpContext.Items["UserId"]!.ToString()!;
+        var result = await _alertService.GetAlertsAsync(userId, pagination, farmId, severity);
         return Ok(ApiResponse<PagedResult<AlertResponseDto>>.SuccessResponse(result));
     }
 

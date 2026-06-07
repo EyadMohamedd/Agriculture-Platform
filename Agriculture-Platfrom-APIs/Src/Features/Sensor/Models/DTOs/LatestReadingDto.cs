@@ -10,7 +10,7 @@ public class LatestSensorValue
 {
     public string SensorId { get; set; } = string.Empty;
     public string SensorName { get; set; } = string.Empty;
-    public double? Value { get; set; }
+    public Dictionary<string, double?> Value { get; set; } = new();
     public DateTime? Timestamp { get; set; }
     public bool IsAnomaly { get; set; }
 }

@@ -9,9 +9,14 @@ public class SensorReadingRepository : SharedRepository<SensorReading>, ISensorR
 {
     public SensorReadingRepository(IMongoDatabase database) : base(database, "SensorReadings") { }
 
-    public async Task<PagedResult<SensorReading>> GetByFarmIdPagedAsync(string farmId, PaginationParams pagination)
+    public async Task<PagedResult<SensorReading>> GetByFarmIdPagedAsync(
+        string farmId, PaginationParams pagination, string? sensorType = null,
+        DateTime? from = null, DateTime? to = null)
     {
-        var filter = Builders<SensorReading>.Filter.Eq(r => r.FarmId, farmId);
+        var filter = Builders<SensorReading>.Filter.Eq(r => r.FarmId, farmId)
+            & BuildSensorTypeFilter(sensorType)
+            & BuildDateRangeFilter(from, to);
+
         var totalCount = await _collection.CountDocumentsAsync(filter);
         var sort = Builders<SensorReading>.Sort.Descending(r => r.Timestamp);
 
@@ -28,6 +33,26 @@ public class SensorReadingRepository : SharedRepository<SensorReading>, ISensorR
             Page = pagination.Page,
             PageSize = pagination.PageSize
         };
+    }
+
+    private static FilterDefinition<SensorReading> BuildSensorTypeFilter(string? sensorType) => sensorType switch
+    {
+        "temperature"    => Builders<SensorReading>.Filter.Ne(r => r.Temperature, null),
+        "ph"             => Builders<SensorReading>.Filter.Ne(r => r.SoilPh, null),
+        "moisture"       => Builders<SensorReading>.Filter.Ne(r => r.SoilMoisture, null),
+        "npk" or "npk_n" => Builders<SensorReading>.Filter.Ne(r => r.NpkN, null),
+        "npk_p"          => Builders<SensorReading>.Filter.Ne(r => r.NpkP, null),
+        "npk_k"          => Builders<SensorReading>.Filter.Ne(r => r.NpkK, null),
+        "rainfall"       => Builders<SensorReading>.Filter.Ne(r => r.Rainfall, null),
+        _                => Builders<SensorReading>.Filter.Empty
+    };
+
+    private static FilterDefinition<SensorReading> BuildDateRangeFilter(DateTime? from, DateTime? to)
+    {
+        var filter = Builders<SensorReading>.Filter.Empty;
+        if (from.HasValue) filter &= Builders<SensorReading>.Filter.Gte(r => r.Timestamp, from.Value);
+        if (to.HasValue)   filter &= Builders<SensorReading>.Filter.Lte(r => r.Timestamp, to.Value);
+        return filter;
     }
 
     public async Task<List<SensorReading>> GetLatestByFarmIdAsync(string farmId, int limit = 10)
@@ -63,7 +88,9 @@ public class SensorReadingRepository : SharedRepository<SensorReading>, ISensorR
             "temperature"  => readings.Where(r => r.Temperature.HasValue).Select(r => r.Temperature!.Value).ToList(),
             "ph"           => readings.Where(r => r.SoilPh.HasValue).Select(r => r.SoilPh!.Value).ToList(),
             "moisture"     => readings.Where(r => r.SoilMoisture.HasValue).Select(r => r.SoilMoisture!.Value).ToList(),
-            "npk"          => readings.Where(r => r.NpkN.HasValue).Select(r => r.NpkN!.Value).ToList(),
+            "npk" or "npk_n" => readings.Where(r => r.NpkN.HasValue).Select(r => r.NpkN!.Value).ToList(),
+            "npk_p"        => readings.Where(r => r.NpkP.HasValue).Select(r => r.NpkP!.Value).ToList(),
+            "npk_k"        => readings.Where(r => r.NpkK.HasValue).Select(r => r.NpkK!.Value).ToList(),
             "rainfall"     => readings.Where(r => r.Rainfall.HasValue).Select(r => r.Rainfall!.Value).ToList(),
             _              => []
         };

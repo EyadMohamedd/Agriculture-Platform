@@ -5,7 +5,7 @@ namespace AgriculturalMonitorSystem.Src.Features.Alert.Services;
 
 public interface IAlertService
 {
-    Task<PagedResult<AlertResponseDto>> GetAlertsAsync(string userId, string userRole, PaginationParams pagination);
+    Task<PagedResult<AlertResponseDto>> GetAlertsAsync(string userId, PaginationParams pagination, string? farmId = null, string? severity = null);
 
     /// <summary>
     /// Evaluate a sensor reading against validation thresholds and create/update alerts.

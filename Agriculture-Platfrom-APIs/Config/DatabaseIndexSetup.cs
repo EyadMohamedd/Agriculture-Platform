@@ -51,5 +51,29 @@ public static class DatabaseIndexSetup
         await alerts.Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(
             Builders<BsonDocument>.IndexKeys.Ascending("timestamp"),
             new CreateIndexOptions { Name = "idx_alerts_timestamp" }));
+
+        // ── PasswordResetTokens ───────────────────────────────────────────────
+        var tokens = database.GetCollection<BsonDocument>("PasswordResetTokens");
+        await tokens.Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Ascending("user_id"),
+            new CreateIndexOptions { Name = "idx_pwdreset_user_id" }));
+        await tokens.Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Ascending("token"),
+            new CreateIndexOptions { Unique = true, Name = "idx_pwdreset_token_unique" }));
+
+        // ── FarmValidationRanges ──────────────────────────────────────────────
+        var farmRanges = database.GetCollection<BsonDocument>("FarmValidationRanges");
+        await farmRanges.Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Ascending("farm_id").Ascending("sensor_type"),
+            new CreateIndexOptions { Unique = true, Name = "idx_farmranges_farm_sensortype_unique" }));
+
+        // ── AiConversations ───────────────────────────────────────────────────
+        var conversations = database.GetCollection<BsonDocument>("AiConversations");
+        await conversations.Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Ascending("user_id"),
+            new CreateIndexOptions { Name = "idx_aiconversations_user_id" }));
+        await conversations.Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Ascending("farm_id"),
+            new CreateIndexOptions { Name = "idx_aiconversations_farm_id" }));
     }
 }

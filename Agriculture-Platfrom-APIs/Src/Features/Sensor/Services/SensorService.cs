@@ -25,55 +25,35 @@ public class SensorService : ISensorService
     }
 
     public async Task<PagedResult<SensorReadingDto>> GetReadingsAsync(
-        string? farmId, string userId, string userRole, PaginationParams pagination)
+        string? farmId, string userId, PaginationParams pagination,
+        string? sensorType = null, DateTime? from = null, DateTime? to = null)
     {
         if (farmId != null)
         {
-            await ValidateFarmAccessAsync(farmId, userId, userRole);
-            var result = await _readingRepository.GetByFarmIdPagedAsync(farmId, pagination);
+            await ValidateFarmAccessAsync(farmId, userId);
+            var result = await _readingRepository.GetByFarmIdPagedAsync(farmId, pagination, sensorType, from, to);
             return MapPagedResult(result);
         }
 
-        // No farmId: Admins see all (across all farms), Farmers see own
-        if (userRole == RoleConstants.Admin)
+        var userFarms = await _farmRepository.GetByUserIdAsync(userId);
+        var allReadings = new List<SensorReadingDto>();
+        foreach (var farm in userFarms)
         {
-            var farms = await _farmRepository.GetAllAsync();
-            var allReadings = new List<SensorReadingDto>();
-            foreach (var farm in farms)
-            {
-                var r = await _readingRepository.GetLatestByFarmIdAsync(farm.Id, pagination.PageSize);
-                allReadings.AddRange(r.Select(MapToDto));
-            }
-            return new PagedResult<SensorReadingDto>
-            {
-                Items = allReadings.Take(pagination.PageSize).ToList(),
-                TotalCount = allReadings.Count,
-                Page = pagination.Page,
-                PageSize = pagination.PageSize
-            };
+            var r = await _readingRepository.GetByFarmIdPagedAsync(farm.Id, pagination, sensorType, from, to);
+            allReadings.AddRange(r.Items.Select(MapToDto));
         }
-        else
+        return new PagedResult<SensorReadingDto>
         {
-            var userFarms = await _farmRepository.GetByUserIdAsync(userId);
-            var allReadings = new List<SensorReadingDto>();
-            foreach (var farm in userFarms)
-            {
-                var r = await _readingRepository.GetByFarmIdPagedAsync(farm.Id, pagination);
-                allReadings.AddRange(r.Items.Select(MapToDto));
-            }
-            return new PagedResult<SensorReadingDto>
-            {
-                Items = allReadings.Take(pagination.PageSize).ToList(),
-                TotalCount = allReadings.Count,
-                Page = pagination.Page,
-                PageSize = pagination.PageSize
-            };
-        }
+            Items      = allReadings.Take(pagination.PageSize).ToList(),
+            TotalCount = allReadings.Count,
+            Page       = pagination.Page,
+            PageSize   = pagination.PageSize
+        };
     }
 
-    public async Task<LatestReadingDto> GetLatestReadingsByFarmAsync(string farmId, string userId, string userRole)
+    public async Task<LatestReadingDto> GetLatestReadingsByFarmAsync(string farmId, string userId)
     {
-        await ValidateFarmAccessAsync(farmId, userId, userRole);
+        await ValidateFarmAccessAsync(farmId, userId);
 
         var sensors = await _sensorRepository.GetByFarmIdAsync(farmId);
         var readings = new Dictionary<string, LatestSensorValue>();
@@ -95,9 +75,9 @@ public class SensorService : ISensorService
     }
 
     public async Task<SensorStatisticsDto> GetStatisticsAsync(
-        string farmId, string sensorType, DateTime from, DateTime to, string userId, string userRole)
+        string farmId, string sensorType, DateTime from, DateTime to, string userId)
     {
-        await ValidateFarmAccessAsync(farmId, userId, userRole);
+        await ValidateFarmAccessAsync(farmId, userId);
 
         var stats = await _readingRepository.GetStatisticsByFarmIdAsync(farmId, sensorType, from, to);
 
@@ -119,22 +99,22 @@ public class SensorService : ISensorService
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private async Task ValidateFarmAccessAsync(string farmId, string userId, string userRole)
+    private async Task ValidateFarmAccessAsync(string farmId, string userId)
     {
         var farm = await _farmRepository.GetByIdAsync(farmId)
             ?? throw new NotFoundException(ErrorMessages.FarmNotFound);
-        if (userRole != RoleConstants.Admin && farm.UserId != userId)
+        if (farm.UserId != userId)
             throw new ForbiddenException(ErrorMessages.FarmAccessDenied);
     }
 
-    private static double? ExtractValue(SensorReading? r, string sensorType) => sensorType switch
+    private static Dictionary<string, double?> ExtractValue(SensorReading? r, string sensorType) => sensorType switch
     {
-        "temperature" => r?.Temperature,
-        "ph"          => r?.SoilPh,
-        "moisture"    => r?.SoilMoisture,
-        "npk"         => r?.NpkN,
-        "rainfall"    => r?.Rainfall,
-        _             => null
+        "temperature" => new() { ["temperature"] = r?.Temperature },
+        "ph"          => new() { ["ph"]          = r?.SoilPh },
+        "moisture"    => new() { ["moisture"]    = r?.SoilMoisture },
+        "npk"         => new() { ["n"] = r?.NpkN, ["p"] = r?.NpkP, ["k"] = r?.NpkK },
+        "rainfall"    => new() { ["rainfall"]    = r?.Rainfall },
+        _             => new()
     };
 
     private static SensorReadingDto MapToDto(SensorReading r) => new()

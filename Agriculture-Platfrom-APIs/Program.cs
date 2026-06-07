@@ -21,6 +21,8 @@ using AgriculturalMonitorSystem.Src.Features.Farm.Models.DTOs;
 using AgriculturalMonitorSystem.Src.Features.Farm.Repositories;
 using AgriculturalMonitorSystem.Src.Features.Farm.Services;
 using AgriculturalMonitorSystem.Src.Features.Farm.Validators;
+using AgriculturalMonitorSystem.Src.Features.Ai.Repositories;
+using AgriculturalMonitorSystem.Src.Features.Ai.Services;
 using AgriculturalMonitorSystem.Src.Features.Sensor.Repositories;
 using AgriculturalMonitorSystem.Src.Features.Sensor.Services;
 using AgriculturalMonitorSystem.Src.Shared.BackgroundServices;
@@ -51,10 +53,12 @@ try
     var mongoSettings      = builder.Configuration.GetSection("MongoDbSettings").Get<MongoDbSettings>()!;
     var jwtSettings        = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
     var simulationSettings = builder.Configuration.GetSection("SimulationSettings").Get<SimulationSettings>()!;
+    var aiSettings         = builder.Configuration.GetSection("AiSettings").Get<AiSettings>()!;
 
     builder.Services.AddSingleton(mongoSettings);
     builder.Services.AddSingleton(jwtSettings);
     builder.Services.AddSingleton(simulationSettings);
+    builder.Services.AddSingleton(aiSettings);
 
     // ── MongoDB ───────────────────────────────────────────────────────────────
     builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(mongoSettings.ConnectionString));
@@ -71,11 +75,14 @@ try
     builder.Services.AddScoped<ISensorReadingRepository, SensorReadingRepository>();
     builder.Services.AddScoped<IAlertRepository,        AlertRepository>();
     builder.Services.AddScoped<IAdminRepository,        AdminRepository>();
+    builder.Services.AddScoped<IAiRepository,           AiRepository>();
 
     // ── Shared services ───────────────────────────────────────────────────────
     builder.Services.AddScoped<IReferenceChecker,       ReferenceChecker>();
     builder.Services.AddScoped<IResourceOwnershipService, ResourceOwnershipService>();
     builder.Services.AddScoped<IDeleteService,          DeleteService>();
+    builder.Services.AddScoped<EnvironmentContextBuilder>();
+    builder.Services.AddHttpClient<AiHttpClient>();
 
     // ── Auth utilities ────────────────────────────────────────────────────────
     builder.Services.AddSingleton<JwtHelper>();
@@ -87,6 +94,7 @@ try
     builder.Services.AddScoped<ISensorService,  SensorService>();
     builder.Services.AddScoped<IAlertService,   AlertService>();
     builder.Services.AddScoped<IAdminService,   AdminService>();
+    builder.Services.AddScoped<IAiService,      AiService>();
 
     // ── Simulation background service (Singleton + HostedService) ─────────────
     builder.Services.AddSingleton<CsvReadingProvider>();

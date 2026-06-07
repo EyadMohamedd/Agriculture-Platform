@@ -1,7 +1,6 @@
 using AgriculturalMonitorSystem.Src.Features.Admin.Repositories;
 using AgriculturalMonitorSystem.Src.Features.Alert.Models.DTOs;
 using AgriculturalMonitorSystem.Src.Features.Alert.Repositories;
-using AgriculturalMonitorSystem.Src.Shared.Constants;
 using AgriculturalMonitorSystem.Src.Shared.Models;
 using AlertEntity = AgriculturalMonitorSystem.Src.Features.Alert.Models.Entities.Alert;
 
@@ -24,11 +23,9 @@ public class AlertService : IAlertService
     }
 
     public async Task<PagedResult<AlertResponseDto>> GetAlertsAsync(
-        string userId, string userRole, PaginationParams pagination)
+        string userId, PaginationParams pagination, string? farmId = null, string? severity = null)
     {
-        var result = userRole == RoleConstants.Admin
-            ? await _alertRepository.GetAllPagedAsync(pagination)
-            : await _alertRepository.GetByUserIdPagedAsync(userId, pagination);
+        var result = await _alertRepository.GetByUserIdPagedAsync(userId, pagination, farmId, severity);
 
         return new PagedResult<AlertResponseDto>
         {
@@ -101,6 +98,13 @@ public class AlertService : IAlertService
         {
             severity  = "Medium"; alertType = $"{sensorType}_above_normal"; threshold = maxNormal;
         }
+
+        // ── Auto-resolve: keep only the current severity level active for this sensor type ──
+        string[] allSeverities = ["Critical", "High", "Medium"];
+        var toResolve = severity == null
+            ? allSeverities
+            : allSeverities.Where(s => s != severity).ToArray();
+        await _alertRepository.ResolveBySensorTypePrefixAndSeveritiesAsync(sensorId, sensorType, toResolve);
 
         if (severity == null || alertType == null) return;
 

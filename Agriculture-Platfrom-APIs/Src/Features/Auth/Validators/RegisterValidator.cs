@@ -25,13 +25,5 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
             .MinimumLength(8).WithMessage("Password must be at least 8 characters.")
             .Matches(@"[a-zA-Z]").WithMessage("Password must contain at least one letter.")
             .Matches(@"[0-9]").WithMessage("Password must contain at least one number.");
-
-        When(x => x.FarmLocation != null, () =>
-        {
-            RuleFor(x => x.FarmLocation!.Latitude)
-                .InclusiveBetween(-90, 90).WithMessage("Latitude must be between -90 and 90.");
-            RuleFor(x => x.FarmLocation!.Longitude)
-                .InclusiveBetween(-180, 180).WithMessage("Longitude must be between -180 and 180.");
-        });
     }
 }

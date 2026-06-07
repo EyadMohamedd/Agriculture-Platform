@@ -13,4 +13,5 @@ public interface IAuthRepository : ISharedRepository<User>
     Task MarkTokenAsUsedAsync(string tokenId);
     Task<bool> IsLastAdminAsync(string userId);
     Task<PagedResult<User>> GetUsersPagedAsync(PaginationParams pagination);
+    Task DeletePasswordResetTokensByUserIdAsync(string userId);
 }

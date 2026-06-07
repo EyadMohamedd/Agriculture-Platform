@@ -11,7 +11,6 @@ public interface IAdminService
 
     // ── System-default validation ranges ─────────────────────────────────────
     Task<List<ValidationRangeDto>> GetValidationRangesAsync();
-    Task<ValidationRangeDto> CreateValidationRangeAsync(ValidationRangeDto dto);
     Task<ValidationRangeDto> UpdateValidationRangeAsync(string id, ValidationRangeDto dto);
 
 }

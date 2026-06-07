@@ -24,11 +24,10 @@ public class AdminController : ControllerBase
 
     // ── User management ───────────────────────────────────────────────────────
 
-    // GET /api/admin/users?page=1
+    // GET /api/admin/users?page=1&pageSize=20
     [HttpGet("users")]
-    public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1)
+    public async Task<IActionResult> GetAllUsers([FromQuery] PaginationParams pagination)
     {
-        var pagination = new PaginationParams { Page = page, PageSize = 20 };
         var result = await _adminService.GetAllUsersAsync(pagination);
         return Ok(ApiResponse<PagedResult<UserManagementDto>>.SuccessResponse(result));
     }
@@ -49,20 +48,6 @@ public class AdminController : ControllerBase
     {
         var ranges = await _adminService.GetValidationRangesAsync();
         return Ok(ApiResponse<List<ValidationRangeDto>>.SuccessResponse(ranges));
-    }
-
-    // POST /api/admin/validation-ranges
-    [HttpPost("validation-ranges")]
-    public async Task<IActionResult> CreateValidationRange([FromBody] ValidationRangeDto dto)
-    {
-        var validation = await _rangeValidator.ValidateAsync(dto);
-        if (!validation.IsValid)
-            return BadRequest(ApiResponse.FailureResponse("Validation failed.",
-                validation.Errors.Select(e => e.ErrorMessage)));
-
-        var result = await _adminService.CreateValidationRangeAsync(dto);
-        return StatusCode(201, ApiResponse<ValidationRangeDto>.SuccessResponse(result,
-            "Validation range created successfully."));
     }
 
     // PUT /api/admin/validation-ranges/{id}

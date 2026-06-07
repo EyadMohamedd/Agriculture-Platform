@@ -1,4 +1,5 @@
 using AgriculturalMonitorSystem.Src.Features.Admin.Repositories;
+using AgriculturalMonitorSystem.Src.Features.Ai.Repositories;
 using AgriculturalMonitorSystem.Src.Features.Alert.Repositories;
 using AgriculturalMonitorSystem.Src.Features.Auth.Repositories;
 using AgriculturalMonitorSystem.Src.Features.Farm.Repositories;
@@ -25,6 +26,7 @@ public class DeleteService : IDeleteService
     private readonly ISensorReadingRepository _readingRepository;
     private readonly IAlertRepository _alertRepository;
     private readonly IAdminRepository _adminRepository;
+    private readonly IAiRepository _aiRepository;
     private readonly IReferenceChecker _referenceChecker;
     private readonly ILogger<DeleteService> _logger;
 
@@ -35,17 +37,19 @@ public class DeleteService : IDeleteService
         ISensorReadingRepository readingRepository,
         IAlertRepository alertRepository,
         IAdminRepository adminRepository,
+        IAiRepository aiRepository,
         IReferenceChecker referenceChecker,
         ILogger<DeleteService> logger)
     {
-        _authRepository = authRepository;
-        _farmRepository = farmRepository;
+        _authRepository   = authRepository;
+        _farmRepository   = farmRepository;
         _sensorRepository = sensorRepository;
         _readingRepository = readingRepository;
-        _alertRepository = alertRepository;
-        _adminRepository = adminRepository;
+        _alertRepository  = alertRepository;
+        _adminRepository  = adminRepository;
+        _aiRepository     = aiRepository;
         _referenceChecker = referenceChecker;
-        _logger = logger;
+        _logger           = logger;
     }
 
     /// <summary>
@@ -67,6 +71,7 @@ public class DeleteService : IDeleteService
                 throw new BadRequestException(ErrorMessages.UserHasFarms);
         }
 
+        await _authRepository.DeletePasswordResetTokensByUserIdAsync(userId);
         var deleted = await _authRepository.DeleteAsync(userId);
         _logger.LogInformation("User {UserId} deleted (force={Force})", userId, force);
         return deleted;
@@ -96,6 +101,9 @@ public class DeleteService : IDeleteService
 
         // Delete custom validation range overrides for this farm
         await _adminRepository.DeleteFarmValidationRangesByFarmIdAsync(farmId);
+
+        // Delete AI conversations for this farm
+        await _aiRepository.DeleteByFarmIdAsync(farmId);
 
         var deleted = await _farmRepository.DeleteAsync(farmId);
         _logger.LogInformation("Farm {FarmId} deleted with full cascade ({SensorCount} sensors removed)",

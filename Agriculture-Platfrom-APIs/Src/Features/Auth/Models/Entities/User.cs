@@ -1,6 +1,5 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using AgriculturalMonitorSystem.Src.Shared.Models;
 
 namespace AgriculturalMonitorSystem.Src.Features.Auth.Models.Entities;
 
@@ -24,10 +23,6 @@ public class User
 
     [BsonElement("role")]
     public string Role { get; set; } = "Farmer";
-
-    [BsonElement("farm_location")]
-    [BsonIgnoreIfNull]
-    public Location? FarmLocation { get; set; }
 
     [BsonElement("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

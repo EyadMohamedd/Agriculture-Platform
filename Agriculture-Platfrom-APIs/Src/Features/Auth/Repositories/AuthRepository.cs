@@ -44,6 +44,12 @@ public class AuthRepository : SharedRepository<User>, IAuthRepository
         await _resetTokens.UpdateOneAsync(filter, update);
     }
 
+    public async Task DeletePasswordResetTokensByUserIdAsync(string userId)
+    {
+        var filter = Builders<PasswordResetToken>.Filter.Eq(t => t.UserId, userId);
+        await _resetTokens.DeleteManyAsync(filter);
+    }
+
     public async Task<bool> IsLastAdminAsync(string userId)
     {
         var filter = Builders<User>.Filter.And(

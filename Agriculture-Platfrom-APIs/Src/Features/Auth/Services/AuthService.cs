@@ -42,7 +42,6 @@ public class AuthService : IAuthService
             Phone = dto.Phone,
             PasswordHash = _passwordHasher.Hash(dto.Password),
             Role = RoleConstants.Farmer,
-            FarmLocation = dto.FarmLocation,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -84,7 +83,6 @@ public class AuthService : IAuthService
 
         if (dto.Name != null) user.Name = dto.Name.Trim();
         if (dto.Phone != null) user.Phone = dto.Phone;
-        if (dto.FarmLocation != null) user.FarmLocation = dto.FarmLocation;
         user.UpdatedAt = DateTime.UtcNow;
 
         await _authRepository.UpdateAsync(userId, user);

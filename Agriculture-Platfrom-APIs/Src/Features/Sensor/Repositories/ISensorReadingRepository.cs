@@ -6,7 +6,7 @@ namespace AgriculturalMonitorSystem.Src.Features.Sensor.Repositories;
 
 public interface ISensorReadingRepository : ISharedRepository<SensorReading>
 {
-    Task<PagedResult<SensorReading>> GetByFarmIdPagedAsync(string farmId, PaginationParams pagination);
+    Task<PagedResult<SensorReading>> GetByFarmIdPagedAsync(string farmId, PaginationParams pagination, string? sensorType = null, DateTime? from = null, DateTime? to = null);
     Task<List<SensorReading>> GetLatestByFarmIdAsync(string farmId, int limit = 10);
     Task<SensorReading?> GetLatestBySensorIdAsync(string sensorId);
     Task<Dictionary<string, double>> GetStatisticsByFarmIdAsync(string farmId, string sensorType, DateTime from, DateTime to);

@@ -18,10 +18,8 @@ public class Farm
     public string Name { get; set; } = string.Empty;
 
     [BsonElement("location")]
-    [BsonIgnoreIfNull]
-    public Location? Location { get; set; }
+    public Location Location { get; set; } = new();
 
-    /// <summary>Optional crop type growing on this farm (e.g. "Wheat", "Rice", "Maize")</summary>
     [BsonElement("crop_type")]
     [BsonIgnoreIfNull]
     public string? CropType { get; set; }
