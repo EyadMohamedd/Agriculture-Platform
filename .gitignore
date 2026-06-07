@@ -1,10 +1,97 @@
-# Build outputs (always ignore)
-/Agriculture-Platfrom-APIs/bin/
-/Agriculture-Platfrom-APIs/obj/
-
-# Logs (always ignore)
-/Agriculture-Platfrom-APIs/Logs/
-
-# IDE
+# ================================
+# IDE & Editor
+# ================================
 .vs/
 .vscode/
+*.user
+*.suo
+
+# ================================
+# OS Files
+# ================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ================================
+# Environment / Secrets (ALL folders)
+# ================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env.local
+**/appsettings.Development.json
+**/appsettings.Production.json
+
+# ================================
+# FRONTEND (Agriculture-Platform-Frontend)
+# ================================
+
+# Dependencies - never push node_modules
+node_modules/
+**/node_modules/
+
+# Vite build output
+/Agriculture-Platform-Frontend/dist/
+/Agriculture-Platform-Frontend/.vite/
+
+# Misc frontend
+/Agriculture-Platform-Frontend/.cache/
+/Agriculture-Platform-Frontend/coverage/
+
+# ================================
+# BACKEND (.NET - Agriculture-Platfrom-Backend & APIs)
+# ================================
+
+# Build outputs
+**/bin/
+**/obj/
+
+# Logs
+**/Logs/
+*.log
+
+# .NET secrets & config
+**/appsettings.Development.json
+secrets.json
+**/*.pfx
+**/*.p12
+
+# ================================
+# RAG (Agri_RAG - Python/FastAPI)
+# ================================
+
+# Python virtual environment
+venv/
+.venv/
+**/venv/
+**/.venv/
+env/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pycache
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Data files (large or sensitive)
+*.dump
+*.db
+*.sqlite
+Agri_RAG/pdfs/
+**/pdfs/
+**/data/raw/
+
+# FastAPI / Uvicorn
+*.pid
