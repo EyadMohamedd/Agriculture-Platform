@@ -56,6 +56,7 @@ export default function SensorStatistics() {
   const [farms, setFarms] = useState([]);
   const [selectedFarm, setSelectedFarm] = useState('');
   const [sensorType, setSensorType] = useState('temperature');
+  const [appliedSensorType, setAppliedSensorType] = useState('temperature');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [stats, setStats] = useState(null);
@@ -98,6 +99,7 @@ export default function SensorStatistics() {
       setStats(statsRes.data.data || null);
       const items = (readingsRes.data.data?.items || []).slice().reverse();
       setChartReadings(items);
+      setAppliedSensorType(st);
     }).catch(() => setError('Failed to load statistics'))
       .finally(() => setLoading(false));
   };
@@ -114,10 +116,10 @@ export default function SensorStatistics() {
   const xLabels = chartReadings.map((r) =>
     new Date(r.timestamp).toLocaleString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   );
-  const yValues = chartReadings.map((r) => extractValue(r, sensorType) ?? null);
+  const yValues = chartReadings.map((r) => extractValue(r, appliedSensorType) ?? null);
   const hasChartData = yValues.some((v) => v != null);
 
-  const currentLabel = SENSOR_TYPES.find((t) => t.value === sensorType)?.label ?? sensorType;
+  const currentLabel = SENSOR_TYPES.find((t) => t.value === appliedSensorType)?.label ?? appliedSensorType;
 
   return (
     <Stack spacing={3}>

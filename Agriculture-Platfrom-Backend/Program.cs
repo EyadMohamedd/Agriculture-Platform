@@ -3,33 +3,34 @@ using MongoDB.Driver;
 using Serilog;
 using Serilog.Events;
 using AgriculturalMonitorSystem.Config;
-using AgriculturalMonitorSystem.Src.Features.Admin.Controllers;
-using AgriculturalMonitorSystem.Src.Features.Admin.Models.DTOs;
-using AgriculturalMonitorSystem.Src.Features.Admin.Repositories;
-using AgriculturalMonitorSystem.Src.Features.Admin.Services;
-using AgriculturalMonitorSystem.Src.Features.Admin.Validators;
-using AgriculturalMonitorSystem.Src.Features.Alert.Repositories;
-using AgriculturalMonitorSystem.Src.Features.Alert.Services;
-using AgriculturalMonitorSystem.Src.Features.Alert.Validators;
-using AgriculturalMonitorSystem.Src.Features.Auth.Models.DTOs;
-using AgriculturalMonitorSystem.Src.Features.Auth.Models.Entities;
-using AgriculturalMonitorSystem.Src.Features.Auth.Repositories;
-using AgriculturalMonitorSystem.Src.Features.Auth.Services;
-using AgriculturalMonitorSystem.Src.Features.Auth.Utils;
-using AgriculturalMonitorSystem.Src.Features.Auth.Validators;
-using AgriculturalMonitorSystem.Src.Features.Farm.Models.DTOs;
-using AgriculturalMonitorSystem.Src.Features.Farm.Repositories;
-using AgriculturalMonitorSystem.Src.Features.Farm.Services;
-using AgriculturalMonitorSystem.Src.Features.Farm.Validators;
-using AgriculturalMonitorSystem.Src.Features.Ai.Repositories;
-using AgriculturalMonitorSystem.Src.Features.Ai.Services;
-using AgriculturalMonitorSystem.Src.Features.Sensor.Repositories;
-using AgriculturalMonitorSystem.Src.Features.Sensor.Services;
-using AgriculturalMonitorSystem.Src.Shared.BackgroundServices;
-using AgriculturalMonitorSystem.Src.Shared.Constants;
-using AgriculturalMonitorSystem.Src.Shared.Interfaces;
-using AgriculturalMonitorSystem.Src.Shared.Middleware;
-using AgriculturalMonitorSystem.Src.Shared.Services;
+using AgriculturalMonitorSystem.Api.DTOs;
+using AgriculturalMonitorSystem.Api.Validators;
+using AgriculturalMonitorSystem.Api.DTOs;
+using AgriculturalMonitorSystem.Api.Validators;
+using AgriculturalMonitorSystem.Api.DTOs;
+using AgriculturalMonitorSystem.Api.Validators;
+using AgriculturalMonitorSystem.Api.DTOs;
+using AgriculturalMonitorSystem.Api.Validators;
+
+using AgriculturalMonitorSystem.Application.DomainModels;
+using AgriculturalMonitorSystem.Application.Constants;
+using AgriculturalMonitorSystem.Application.Exceptions;
+using AgriculturalMonitorSystem.Application.Services.Interfaces;
+using AgriculturalMonitorSystem.Application.Services.Implementations;
+
+using AgriculturalMonitorSystem.Infrastructure.Data.Repositories.Admin;
+using AgriculturalMonitorSystem.Infrastructure.Data.Repositories.Alerts;
+using AgriculturalMonitorSystem.Infrastructure.Data.Repositories.Auth;
+using AgriculturalMonitorSystem.Infrastructure.Data.Repositories.Farms;
+using AgriculturalMonitorSystem.Infrastructure.Data.Repositories.Sensors;
+using AgriculturalMonitorSystem.Infrastructure.Data.Repositories.Ai;
+using AgriculturalMonitorSystem.Infrastructure.Simulation;
+
+using AgriculturalMonitorSystem.Api.Middleware;
+using AgriculturalMonitorSystem.Shared.Helpers;
+
+using AgriculturalMonitorSystem.Application.Services.Interfaces;
+using AgriculturalMonitorSystem.Application.Services.Implementations;
 
 // ── Serilog early configuration ───────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
@@ -69,13 +70,16 @@ try
     builder.Services.AddMemoryCache();
 
     // ── Repositories (Scoped — one per HTTP request) ──────────────────────────
-    builder.Services.AddScoped<IAuthRepository,         AuthRepository>();
+    builder.Services.AddScoped<IUserRepository,         UserRepository>();
+    builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
     builder.Services.AddScoped<IFarmRepository,         FarmRepository>();
     builder.Services.AddScoped<ISensorRepository,       SensorRepository>();
     builder.Services.AddScoped<ISensorReadingRepository, SensorReadingRepository>();
     builder.Services.AddScoped<IAlertRepository,        AlertRepository>();
     builder.Services.AddScoped<IAdminRepository,        AdminRepository>();
-    builder.Services.AddScoped<IAiRepository,           AiRepository>();
+    builder.Services.AddScoped<IValidationRangeRepository, ValidationRangeRepository>();
+    builder.Services.AddScoped<IFarmValidationRangeRepository, FarmValidationRangeRepository>();
+    builder.Services.AddScoped<IAiConversationRepository,           AiConversationRepository>();
 
     // ── Shared services ───────────────────────────────────────────────────────
     builder.Services.AddScoped<IReferenceChecker,       ReferenceChecker>();
@@ -162,7 +166,7 @@ static async Task RunStartupTasksAsync(WebApplication app)
     Log.Information("Validation range defaults verified");
 
     // 3. Seed default Admin user if no admin account exists
-    var authRepo = scope.ServiceProvider.GetRequiredService<IAuthRepository>();
+    var authRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
     var hasher   = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
 
     if (!await authRepo.EmailExistsAsync("admin@agrisystem.com"))
